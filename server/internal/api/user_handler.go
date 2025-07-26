@@ -10,12 +10,7 @@ import (
 	"net/http"
 )
 
-type RegisterRequest struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-}
-
-type LoginRequest struct {
+type UserRequest struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
 }
@@ -35,7 +30,7 @@ func (h *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req RegisterRequest
+	var req UserRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		h.logger.Printf("ERROR: decoding request body: %v", err)
@@ -100,7 +95,7 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req LoginRequest
+	var req UserRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		h.logger.Printf("ERROR: decoding request body: %v", err)
