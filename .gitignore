@@ -11,6 +11,7 @@
 go.sum
 go.work
 go.work.sum
+/server/database
 
 # === React / Node ===
 node_modules/
