@@ -15,6 +15,10 @@ type UserRequest struct {
 	Password string `json:"password"`
 }
 
+type GetUsersRequest struct {
+	UserID int `json:"user_id"`
+}
+
 type UserHandler struct {
 	Store  store.UserStore
 	logger *log.Logger
@@ -130,4 +134,35 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 			"username": user.Username,
 		},
 	})
+}
+
+func (h *UserHandler) GetUsers(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		utils.WriteJSON(w, http.StatusMethodNotAllowed, utils.Envelope{"error": "Method not allowed"})
+		return
+	}
+
+	var req GetUsersRequest
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		h.logger.Printf("ERROR: decoding request body: %v", err)
+		utils.WriteJSON(w, http.StatusBadRequest, utils.Envelope{"error": "Invalid request body"})
+		return
+	}
+
+	if req.UserID == 0 {
+		h.logger.Printf("ERROR: user_id is required")
+		utils.WriteJSON(w, http.StatusBadRequest, utils.Envelope{"error": "User ID is required"})
+		return
+	}
+
+	users, err := h.Store.GetUsersExcept(req.UserID)
+	if err != nil {
+		h.logger.Printf("ERROR: getting users: %v", err)
+		utils.WriteJSON(w, http.StatusInternalServerError, utils.Envelope{"error": "Failed to get users"})
+		return
+	}
+
+	h.logger.Printf("INFO: users retrieved successfully")
+	utils.WriteJSON(w, http.StatusOK, utils.Envelope{"users": users})
 }

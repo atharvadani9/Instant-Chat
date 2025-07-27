@@ -24,6 +24,7 @@ type UserStore interface {
 	CreateUser(user *User) error
 	GetUserByID(id int) (*User, error)
 	GetUserByUsername(username string) (*User, error)
+	GetUsersExcept(excludeUserID int) ([]*User, error)
 	HashPassword(password string) (string, error)
 	CheckPassword(hashedPassword, password string) error
 	AuthenticateUser(username, password string) (*User, error)
@@ -57,6 +58,31 @@ func (s *PostgresUserStore) GetUserByUsername(username string) (*User, error) {
 		return nil, err
 	}
 	return user, nil
+}
+
+func (s *PostgresUserStore) GetUsersExcept(excludeUserID int) ([]*User, error) {
+	query := `SELECT id, username, created_at FROM users WHERE id != $1`
+	rows, err := s.db.Query(query, excludeUserID)
+	if err != nil {
+		return nil, err
+	}
+	defer func(rows *sql.Rows) {
+		err := rows.Close()
+		if err != nil {
+			panic(err)
+		}
+	}(rows)
+
+	var users []*User
+	for rows.Next() {
+		user := &User{}
+		err := rows.Scan(&user.ID, &user.Username, &user.CreatedAt)
+		if err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+	}
+	return users, nil
 }
 
 // HashPassword hashes a plain text password using bcrypt
