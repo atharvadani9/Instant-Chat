@@ -22,6 +22,7 @@ func SetupRoutes(app *app.Application) *chi.Mux {
 	r.Post("/user.register", app.UserHandler.Register)
 	r.Post("/user.login", app.UserHandler.Login)
 	r.Get("/user.get", app.UserHandler.GetUsers)
+	r.Get("/chat/ws", app.WebSocketHandler.HandleWebSocket)
 
 	return r
 }
