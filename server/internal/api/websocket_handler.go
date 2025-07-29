@@ -33,9 +33,9 @@ func NewWebSocketHandler(messageStore store.MessageStore, userStore store.UserSt
 
 type WSMessage struct {
 	Type       string `json:"type"`
-	SenderID   int    `json:"sender_id"`
-	ReceiverID int    `json:"receiver_id"`
-	Content    string `json:"content"`
+	SenderID   int    `json:"sender_id,omitempty"`
+	ReceiverID int    `json:"receiver_id,omitempty"`
+	Content    string `json:"content,omitempty"`
 	Error      string `json:"error,omitempty"`
 }
 
@@ -76,7 +76,11 @@ func (h *WebSocketHandler) HandleWebSocket(w http.ResponseWriter, r *http.Reques
 		var msg WSMessage
 		err := conn.ReadJSON(&msg)
 		if err != nil {
-			h.logger.Printf("ERROR: reading message: %v", err)
+			if websocket.IsCloseError(err, websocket.CloseNormalClosure) {
+				h.logger.Printf("INFO: client disconnected: %d", userID)
+			} else {
+				h.logger.Printf("ERROR: reading message: %v", err)
+			}
 			return
 		}
 
@@ -173,8 +177,10 @@ func (h *WebSocketHandler) handleSendMessage(senderID int, msg *WSMessage) {
 
 	if senderConn, exists := h.clients[senderID]; exists {
 		response := WSMessage{
-			Type:    "message_sent",
-			Content: "Message sent successfully",
+			Type:       "message_sent",
+			SenderID:   senderID,
+			ReceiverID: msg.ReceiverID,
+			Content:    "Message sent successfully",
 		}
 		err = utils.WriteWebsocketMessage(senderConn, response, h.logger)
 		if err != nil {
@@ -217,8 +223,10 @@ func (h *WebSocketHandler) handleGetMessages(senderID int, msg *WSMessage) {
 
 	if senderConn, exists := h.clients[senderID]; exists {
 		response := map[string]interface{}{
-			"type":     "messages_history",
-			"messages": messages,
+			"type":        "messages_history",
+			"sender_id":   senderID,
+			"receiver_id": msg.ReceiverID,
+			"messages":    messages,
 		}
 		err = utils.WriteWebsocketMessage(senderConn, response, h.logger)
 		if err != nil {
