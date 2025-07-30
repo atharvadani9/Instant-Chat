@@ -2,11 +2,11 @@ import {useState} from "react";
 import {postAPI} from "../../utils/api.ts";
 import type {UserAuthRequest} from "../../types";
 import {enqueueSnackbar} from "notistack";
-import {Alert, Box, Button, CircularProgress, TextField, Typography, Grid,} from "@mui/material";
-import {Link} from "react-router-dom";
+import {Alert, Box, Button, CircularProgress, TextField, Typography, Grid} from "@mui/material";
 import * as React from "react";
+import {Link} from "react-router-dom";
 
-export default function Register() {
+export default function Login() {
     const [formData, setFormData] = useState<UserAuthRequest>({
         username: "",
         password: "",
@@ -32,12 +32,12 @@ export default function Register() {
         setLoading(true);
         setError("");
 
-        const resp = await postAPI("/user.register", formData);
+        const resp = await postAPI("/user.login", formData);
         if (resp.error && resp.error !== "") {
             enqueueSnackbar(resp.error, {variant: "error"});
         } else {
             localStorage.setItem("userID", resp.user.id.toString());
-            enqueueSnackbar("User created successfully", {variant: "success"});
+            enqueueSnackbar("Login successful", {variant: "success"});
             // @todo: redirect to chat page
         }
         setLoading(false);
@@ -52,10 +52,10 @@ export default function Register() {
             sx={{minHeight: '100vh', width: '100%', pt: 4, gap: 1}}
         >
             <Typography variant="h4" component="h1" gutterBottom align="center">
-                {"Register"}
+                {"Login"}
             </Typography>
             <Typography variant="body2" color="text.secondary" align="center">
-                {"Create your account to start chatting"}
+                {"Welcome back! Please sign in to your account"}
             </Typography>
             {error && (
                 <Alert severity="error" sx={{mb: 2}}>
@@ -96,10 +96,10 @@ export default function Register() {
                     color="primary"
                     disabled={loading}
                 >
-                    {loading ? <CircularProgress/> : "Register"}
+                    {loading ? <CircularProgress/> : "Login"}
                 </Button>
-                <Link to="/login" style={{paddingTop: 2}}>
-                    {"Already have an account? Go to Login"}
+                <Link to="/register" style={{paddingTop: 2}}>
+                    {"New user? Go to Register"}
                 </Link>
             </Box>
         </Grid>
