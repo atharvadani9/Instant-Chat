@@ -9,7 +9,6 @@ const api = axios.create({
 
 
 export const postAPI = async (url: string, payload: any) => {
-    console.log("payload: ", payload);
     try {
         const response = await api.post(url, payload);
         return response.data;

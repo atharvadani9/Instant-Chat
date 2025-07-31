@@ -1,18 +1,28 @@
-import {useState} from "react";
+import {useState, useEffect} from "react";
 import {postAPI} from "../../utils/api.ts";
 import type {UserAuthRequest} from "../../types";
 import {enqueueSnackbar} from "notistack";
 import {Alert, Box, Button, CircularProgress, TextField, Typography, Grid} from "@mui/material";
 import * as React from "react";
 import {Link} from "react-router-dom";
+import {useAuthContext} from "../../contexts/AuthContext.tsx";
 
 export default function Login() {
+    // noinspection DuplicatedCode
     const [formData, setFormData] = useState<UserAuthRequest>({
         username: "",
         password: "",
     });
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
+    const {setUserID, logout, isAuthenticated} = useAuthContext();
+
+    useEffect(() => {
+        if (isAuthenticated) {
+            // @todo: redirect to chat page when it's created
+            console.log("User is already authenticated");
+        }
+    }, [isAuthenticated]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({
@@ -34,11 +44,12 @@ export default function Login() {
 
         const resp = await postAPI("/user.login", formData);
         if (resp.error && resp.error !== "") {
+            logout();
             enqueueSnackbar(resp.error, {variant: "error"});
         } else {
-            localStorage.setItem("userID", resp.user.id.toString());
+            setUserID(resp.user.id.toString());
             enqueueSnackbar("Login successful", {variant: "success"});
-            // @todo: redirect to chat page
+            // @todo: redirect to chat page when it's created
         }
         setLoading(false);
     };
