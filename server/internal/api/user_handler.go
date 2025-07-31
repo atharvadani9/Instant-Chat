@@ -8,15 +8,12 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 type UserRequest struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
-}
-
-type GetUsersRequest struct {
-	UserID int `json:"user_id"`
 }
 
 type UserHandler struct {
@@ -142,21 +139,28 @@ func (h *UserHandler) GetUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req GetUsersRequest
-	err := json.NewDecoder(r.Body).Decode(&req)
+	userIDStr := r.URL.Query().Get("user_id")
+	if userIDStr == "" {
+		h.logger.Printf("ERROR: user_id query parameter is required")
+		utils.WriteJSON(w, http.StatusBadRequest, utils.Envelope{"error": "User ID query parameter is required"})
+		return
+	}
+
+	userID, err := strconv.Atoi(userIDStr)
 	if err != nil {
-		h.logger.Printf("ERROR: decoding request body: %v", err)
-		utils.WriteJSON(w, http.StatusBadRequest, utils.Envelope{"error": "Invalid request body"})
+		h.logger.Printf("ERROR: invalid user_id: %v", err)
+		utils.WriteJSON(w, http.StatusBadRequest, utils.Envelope{"error": "Invalid user ID"})
 		return
 	}
 
-	if req.UserID == 0 {
-		h.logger.Printf("ERROR: user_id is required")
-		utils.WriteJSON(w, http.StatusBadRequest, utils.Envelope{"error": "User ID is required"})
+	_, err = h.Store.GetUserByID(userID)
+	if err != nil {
+		h.logger.Printf("ERROR: user not found: %v", err)
+		utils.WriteJSON(w, http.StatusUnauthorized, utils.Envelope{"error": "User not found"})
 		return
 	}
 
-	users, err := h.Store.GetUsersExcept(req.UserID)
+	users, err := h.Store.GetUsersExcept(userID)
 	if err != nil {
 		h.logger.Printf("ERROR: getting users: %v", err)
 		utils.WriteJSON(w, http.StatusInternalServerError, utils.Envelope{"error": "Failed to get users"})
