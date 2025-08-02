@@ -6,7 +6,7 @@ import Login from "../components/Auth/Login.tsx";
 const routes: RouteObject[] = [
     {
         path: "/",
-        element: <Navigate to="/login" replace />,
+        element: <Navigate to="/login" replace/>,
     },
     {
         path: "/login",
@@ -16,6 +16,10 @@ const routes: RouteObject[] = [
         path: "/register",
         element: <Register/>,
     },
+    {
+        path: "/chat",
+        element: <div>Chat</div>,
+    }
 
 ];
 

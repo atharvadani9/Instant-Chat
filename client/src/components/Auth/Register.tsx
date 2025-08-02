@@ -1,10 +1,10 @@
-import {useState, useEffect} from "react";
+import * as React from "react";
+import {useEffect, useState} from "react";
 import {postAPI} from "../../utils/api.ts";
 import type {UserAuthRequest} from "../../types";
 import {enqueueSnackbar} from "notistack";
-import {Alert, Box, Button, CircularProgress, TextField, Typography, Grid,} from "@mui/material";
-import {Link} from "react-router-dom";
-import * as React from "react";
+import {Alert, Box, Button, CircularProgress, Grid, TextField, Typography,} from "@mui/material";
+import {Link, useNavigate} from "react-router-dom";
 import {useAuthContext} from "../../contexts/AuthContext.tsx";
 
 export default function Register() {
@@ -16,13 +16,13 @@ export default function Register() {
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
     const {setUserID, logout, isAuthenticated} = useAuthContext();
+    const navigate = useNavigate();
 
     useEffect(() => {
         if (isAuthenticated) {
-            // @todo: redirect to chat page when it's created
-            console.log("User is already authenticated");
+            navigate("/chat");
         }
-    }, [isAuthenticated]);
+    }, [isAuthenticated, navigate]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({
@@ -39,17 +39,22 @@ export default function Register() {
             return;
         }
 
+        const payload = {
+            username: formData.username.trim(),
+            password: formData.password.trim(),
+        };
+
         setLoading(true);
         setError("");
 
-        const resp = await postAPI("/user.register", formData);
+        const resp = await postAPI("/user.register", payload);
         if (resp.error && resp.error !== "") {
             logout();
             enqueueSnackbar(resp.error, {variant: "error"});
         } else {
             setUserID(resp.user.id.toString());
             enqueueSnackbar("User created successfully", {variant: "success"});
-            // @todo: redirect to chat page when it's created
+            navigate("/chat");
         }
         setLoading(false);
     };

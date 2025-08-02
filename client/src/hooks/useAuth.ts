@@ -29,7 +29,7 @@ export const useAuth = () => {
     }, []);
 
     const setUserID = (userID: string) => {
-        sessionStorage.setItem('userID', userID);
+        localStorage.setItem('userID', userID);
         setAuthState({
             userID,
             isAuthenticated: true,
@@ -38,7 +38,7 @@ export const useAuth = () => {
     };
 
     const logout = () => {
-        sessionStorage.removeItem('userID');
+        localStorage.removeItem('userID');
         setAuthState({
             userID: null,
             isAuthenticated: false,
