@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strconv"
 	"sync"
+	"time"
 )
 
 var upgrader = websocket.Upgrader{
@@ -39,6 +40,7 @@ type WSMessage struct {
 	ReceiverID int    `json:"receiver_id,omitempty"`
 	Content    string `json:"content,omitempty"`
 	Error      string `json:"error,omitempty"`
+	CreatedAt  string `json:"created_at,omitempty"`
 }
 
 func (h *WebSocketHandler) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
@@ -188,12 +190,16 @@ func (h *WebSocketHandler) handleSendMessage(senderID int, msg *WSMessage) {
 	senderConn, senderExists := h.clients[senderID]
 	h.clientsMutex.RUnlock()
 
+	// Get current timestamp
+	currentTime := time.Now().Format(time.RFC3339)
+
 	if recipientExists {
 		response := WSMessage{
 			Type:       "new_message",
 			SenderID:   senderID,
 			ReceiverID: msg.ReceiverID,
 			Content:    msg.Content,
+			CreatedAt:  currentTime,
 		}
 		err := utils.WriteWebsocketMessage(recipientConn, response, h.logger)
 		if err != nil {
@@ -208,6 +214,7 @@ func (h *WebSocketHandler) handleSendMessage(senderID int, msg *WSMessage) {
 			SenderID:   senderID,
 			ReceiverID: msg.ReceiverID,
 			Content:    msg.Content,
+			CreatedAt:  currentTime,
 		}
 		err = utils.WriteWebsocketMessage(senderConn, response, h.logger)
 		if err != nil {

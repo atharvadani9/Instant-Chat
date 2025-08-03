@@ -100,27 +100,57 @@ const MessageWindow: React.FC<MessageWindowProps> = ({
                                 mb: 1,
                             }}
                         >
-                            <Paper
-                                elevation={1}
-                                sx={{
-                                    px: 2,
-                                    py: 1,
-                                    maxWidth: '70%',
-                                    backgroundColor: isFromCurrentUser ? 'primary.main' : 'grey.700',
-                                    color: isFromCurrentUser ? 'primary.contrastText' : 'text.primary',
-                                    borderRadius: 3,
-                                    borderBottomRightRadius: isFromCurrentUser ? 0.5 : 3,
-                                    borderBottomLeftRadius: isFromCurrentUser ? 3 : 0.5,
-                                    boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
-                                }}
-                            >
-                                <Typography
-                                    variant="body2"
-                                    sx={{wordWrap: 'break-word', lineHeight: 1.4}}
+                            <Box sx={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: isFromCurrentUser ? 'flex-end' : 'flex-start'
+                            }}>
+                                <Paper
+                                    elevation={1}
+                                    sx={{
+                                        px: 2,
+                                        py: 1,
+                                        maxWidth: '70%',
+                                        minWidth: 'fit-content',
+                                        width: 'auto',
+                                        backgroundColor: isFromCurrentUser ? 'primary.main' : 'grey.700',
+                                        color: isFromCurrentUser ? 'primary.contrastText' : 'text.primary',
+                                        borderRadius: 3,
+                                        borderBottomRightRadius: isFromCurrentUser ? 0.5 : 3,
+                                        borderBottomLeftRadius: isFromCurrentUser ? 3 : 0.5,
+                                        boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
+                                        display: 'inline-block',
+                                    }}
                                 >
-                                    {message.content}
-                                </Typography>
-                            </Paper>
+                                    <Typography
+                                        variant="body2"
+                                        sx={{
+                                            wordBreak: 'break-word',
+                                            overflowWrap: 'break-word',
+                                            lineHeight: 1.4,
+                                            // whiteSpace: 'pre-wrap'
+                                        }}
+                                    >
+                                        {message.content}
+                                    </Typography>
+                                </Paper>
+                                {message.created_at && (
+                                    <Typography
+                                        variant="caption"
+                                        sx={{
+                                            mt: 0.5,
+                                            color: 'text.secondary',
+                                            fontSize: '0.75rem',
+                                        }}
+                                    >
+                                        {new Date(message.created_at).toLocaleString('en-US', {
+                                            hour: 'numeric',
+                                            minute: '2-digit',
+                                            hour12: true,
+                                        })}
+                                    </Typography>
+                                )}
+                            </Box>
                         </Box>
                     );
                 })}
