@@ -5,6 +5,7 @@ import {enqueueSnackbar} from "notistack";
 import IconButton from "@mui/material/IconButton";
 import SendIcon from '@mui/icons-material/Send';
 import {getAvatarColor} from "../../utils/utils.ts";
+import {useAuthContext} from "../../contexts/AuthContext.tsx";
 
 type MessageWindowProps = {
     selectedUser: User | null;
@@ -21,6 +22,7 @@ const MessageWindow: React.FC<MessageWindowProps> = ({
                                                          connectionState,
                                                          error
                                                      }) => {
+    const {userID} = useAuthContext();
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const [inputText, setInputText] = useState("");
 
@@ -41,11 +43,13 @@ const MessageWindow: React.FC<MessageWindowProps> = ({
     }
 
     const isMessageFromCurrentUser = (message: WSMessage) => {
-        return message.receiver_id === selectedUser?.id;
+        return message.sender_id === parseInt(userID as string);
     };
 
     const displayMessages = messages.filter(msg =>
-        msg.type === "new_message" || (msg.content && msg.content !== "Message sent successfully")
+        (msg.type === "new_message" || msg.type === "message_history") &&
+        msg.content &&
+        msg.content !== "Message sent successfully"
     );
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {

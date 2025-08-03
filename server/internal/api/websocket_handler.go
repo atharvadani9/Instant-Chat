@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"sync"
 )
 
 var upgrader = websocket.Upgrader{
@@ -20,6 +21,7 @@ type WebSocketHandler struct {
 	userStore    store.UserStore
 	logger       *log.Logger
 	clients      map[int]*websocket.Conn
+	clientsMutex sync.RWMutex
 }
 
 func NewWebSocketHandler(messageStore store.MessageStore, userStore store.UserStore, logger *log.Logger) *WebSocketHandler {
@@ -68,8 +70,14 @@ func (h *WebSocketHandler) HandleWebSocket(w http.ResponseWriter, r *http.Reques
 	}
 	defer conn.Close()
 
+	h.clientsMutex.Lock()
 	h.clients[userID] = conn
-	defer delete(h.clients, userID)
+	h.clientsMutex.Unlock()
+	defer func() {
+		h.clientsMutex.Lock()
+		delete(h.clients, userID)
+		h.clientsMutex.Unlock()
+	}()
 	h.logger.Printf("INFO: client connected: %d", userID)
 
 	for {
@@ -102,7 +110,10 @@ func (h *WebSocketHandler) handleMessage(senderID int, msg *WSMessage) {
 func (h *WebSocketHandler) handleSendMessage(senderID int, msg *WSMessage) {
 	if msg.ReceiverID == 0 {
 		h.logger.Printf("ERROR: receiver_id is required")
-		if senderConn, exists := h.clients[senderID]; exists {
+		h.clientsMutex.RLock()
+		senderConn, exists := h.clients[senderID]
+		h.clientsMutex.RUnlock()
+		if exists {
 			response := WSMessage{
 				Type:  "error",
 				Error: "Receiver ID is required",
@@ -117,7 +128,10 @@ func (h *WebSocketHandler) handleSendMessage(senderID int, msg *WSMessage) {
 
 	if msg.Content == "" {
 		h.logger.Printf("ERROR: content is required")
-		if senderConn, exists := h.clients[senderID]; exists {
+		h.clientsMutex.RLock()
+		senderConn, exists := h.clients[senderID]
+		h.clientsMutex.RUnlock()
+		if exists {
 			response := WSMessage{
 				Type:  "error",
 				Error: "Content is required",
@@ -133,7 +147,10 @@ func (h *WebSocketHandler) handleSendMessage(senderID int, msg *WSMessage) {
 	_, err := h.userStore.GetUserByID(msg.ReceiverID)
 	if err != nil {
 		h.logger.Printf("ERROR: receiver user not found: %v", err)
-		if senderConn, exists := h.clients[senderID]; exists {
+		h.clientsMutex.RLock()
+		senderConn, exists := h.clients[senderID]
+		h.clientsMutex.RUnlock()
+		if exists {
 			response := WSMessage{
 				Type:  "error",
 				Error: "Receiver user not found",
@@ -149,7 +166,10 @@ func (h *WebSocketHandler) handleSendMessage(senderID int, msg *WSMessage) {
 	_, err = h.messageStore.CreateMessage(senderID, msg.ReceiverID, msg.Content)
 	if err != nil {
 		h.logger.Printf("ERROR: creating message: %v", err)
-		if senderConn, exists := h.clients[senderID]; exists {
+		h.clientsMutex.RLock()
+		senderConn, exists := h.clients[senderID]
+		h.clientsMutex.RUnlock()
+		if exists {
 			response := WSMessage{
 				Type:  "error",
 				Error: "Failed to send message",
@@ -162,7 +182,13 @@ func (h *WebSocketHandler) handleSendMessage(senderID int, msg *WSMessage) {
 		return
 	}
 
-	if recipientConn, exists := h.clients[msg.ReceiverID]; exists {
+	// Send new_message to recipient
+	h.clientsMutex.RLock()
+	recipientConn, recipientExists := h.clients[msg.ReceiverID]
+	senderConn, senderExists := h.clients[senderID]
+	h.clientsMutex.RUnlock()
+
+	if recipientExists {
 		response := WSMessage{
 			Type:       "new_message",
 			SenderID:   senderID,
@@ -171,20 +197,21 @@ func (h *WebSocketHandler) handleSendMessage(senderID int, msg *WSMessage) {
 		}
 		err := utils.WriteWebsocketMessage(recipientConn, response, h.logger)
 		if err != nil {
-			return
+			h.logger.Printf("ERROR: failed to send message to recipient: %v", err)
 		}
 	}
 
-	if senderConn, exists := h.clients[senderID]; exists {
+	// Send new_message to sender as well so they see their own message
+	if senderExists {
 		response := WSMessage{
-			Type:       "message_sent",
+			Type:       "new_message",
 			SenderID:   senderID,
 			ReceiverID: msg.ReceiverID,
-			Content:    "Message sent successfully",
+			Content:    msg.Content,
 		}
 		err = utils.WriteWebsocketMessage(senderConn, response, h.logger)
 		if err != nil {
-			return
+			h.logger.Printf("ERROR: failed to send message to sender: %v", err)
 		}
 	}
 }
@@ -192,7 +219,10 @@ func (h *WebSocketHandler) handleSendMessage(senderID int, msg *WSMessage) {
 func (h *WebSocketHandler) handleGetMessages(senderID int, msg *WSMessage) {
 	if msg.ReceiverID == 0 {
 		h.logger.Printf("ERROR: receiver_id is required")
-		if senderConn, exists := h.clients[senderID]; exists {
+		h.clientsMutex.RLock()
+		senderConn, exists := h.clients[senderID]
+		h.clientsMutex.RUnlock()
+		if exists {
 			response := WSMessage{
 				Type:  "error",
 				Error: "Receiver ID is required",
@@ -208,7 +238,10 @@ func (h *WebSocketHandler) handleGetMessages(senderID int, msg *WSMessage) {
 	messages, err := h.messageStore.GetMessagesBetweenUsers(senderID, msg.ReceiverID)
 	if err != nil {
 		h.logger.Printf("ERROR: getting messages: %v", err)
-		if senderConn, exists := h.clients[senderID]; exists {
+		h.clientsMutex.RLock()
+		senderConn, exists := h.clients[senderID]
+		h.clientsMutex.RUnlock()
+		if exists {
 			response := WSMessage{
 				Type:  "error",
 				Error: "Failed to get messages",
@@ -221,7 +254,10 @@ func (h *WebSocketHandler) handleGetMessages(senderID int, msg *WSMessage) {
 		return
 	}
 
-	if senderConn, exists := h.clients[senderID]; exists {
+	h.clientsMutex.RLock()
+	senderConn, exists := h.clients[senderID]
+	h.clientsMutex.RUnlock()
+	if exists {
 		response := map[string]interface{}{
 			"type":        "messages_history",
 			"sender_id":   senderID,
@@ -236,7 +272,10 @@ func (h *WebSocketHandler) handleGetMessages(senderID int, msg *WSMessage) {
 }
 
 func (h *WebSocketHandler) handleInvalidMessage(senderID int) {
-	if senderConn, exists := h.clients[senderID]; exists {
+	h.clientsMutex.RLock()
+	senderConn, exists := h.clients[senderID]
+	h.clientsMutex.RUnlock()
+	if exists {
 		response := WSMessage{
 			Type:  "error",
 			Error: "Invalid message type",

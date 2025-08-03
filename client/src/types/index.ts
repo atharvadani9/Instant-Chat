@@ -23,6 +23,7 @@ export type WSMessage = {
     receiver_id?: number;
     content?: string;
     error?: string;
+    created_at?: string;
 }
 
 export type ConnectionState = "connecting" | "connected" | "disconnected";

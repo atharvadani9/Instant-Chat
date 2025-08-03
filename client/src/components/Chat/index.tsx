@@ -17,24 +17,35 @@ export const ChatPage = () => {
 
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
+    // Handle user authentication
     useEffect(() => {
         if (!userID) {
             navigate("/login");
             return;
         }
+    }, [userID, navigate]);
 
+    // Handle initial user selection when users are loaded
+    useEffect(() => {
         if (users.length > 0 && !selectedUser) {
             const firstUser = users[0];
             setSelectedUser(firstUser);
             clearMessages();
             getMessages(firstUser.id);
         }
-    }, [users, getMessages, clearMessages, selectedUser, navigate, userID]);
+    }, [users, selectedUser]); // Removed getMessages and clearMessages from dependencies
+
+    // Handle getting messages when user is selected and WebSocket is connected
+    useEffect(() => {
+        if (selectedUser && connectionState === "connected") {
+            getMessages(selectedUser.id);
+        }
+    }, [selectedUser, connectionState]); // Removed getMessages from dependencies
 
     const handleUserSelect = (user: User) => {
         setSelectedUser(user);
         clearMessages();
-        getMessages(user.id);
+        // getMessages will be called by the useEffect above when selectedUser changes
     }
 
     const handleSendMessage = (content: string) => {
@@ -42,6 +53,7 @@ export const ChatPage = () => {
             return;
         }
         sendMessage(selectedUser.id, content);
+        // Don't call getMessages here - real-time messages will come through WebSocket
     }
 
     return (
