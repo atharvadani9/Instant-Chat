@@ -1,6 +1,6 @@
 import React, {useEffect, useRef, useState} from "react";
 import type {ConnectionState, User, WSMessage} from "../../types";
-import {Avatar, Box, CircularProgress, Grid, Paper, TextField, Typography} from "@mui/material";
+import {Avatar, Box, CircularProgress, Grid, Paper, TextField, Tooltip, Typography} from "@mui/material";
 import {enqueueSnackbar} from "notistack";
 import IconButton from "@mui/material/IconButton";
 import SendIcon from '@mui/icons-material/Send';
@@ -68,12 +68,12 @@ const MessageWindow: React.FC<MessageWindowProps> = ({
     }
 
     return (
-        <Grid container direction="column" height={"100%"}>
-            <Grid>
-                <Paper>
+        <Grid container direction="column" height={"100%"} sx={{p: 1}}>
+            <Grid sx={{justifyContent: 'flex-start', alignItems: 'center'}}>
+                <Paper sx={{p: 2}}>
                     {selectedUser && (
                         <Grid sx={{display: 'flex', alignItems: 'center', gap: 1}}>
-                            <Avatar sx={{bgcolor: getAvatarColor(selectedUser.username)}}>
+                            <Avatar sx={{bgcolor: getAvatarColor(selectedUser.username), width: 32, height: 32}}>
                                 {selectedUser.username.charAt(0).toUpperCase()}
                             </Avatar>
                             <Typography variant="h6" component="h2">
@@ -83,62 +83,65 @@ const MessageWindow: React.FC<MessageWindowProps> = ({
                     )}
                 </Paper>
             </Grid>
-            <Grid sx={{flexGrow: 1, overflow: 'auto'}}>
-                <Paper sx={{p: 2, overflow: 'auto'}}>
-                    {displayMessages.map((message, index) => {
-                        const isFromCurrentUser = isMessageFromCurrentUser(message);
-                        return (
-                            <Box
-                                key={index}
+            <Grid sx={{flexGrow: 1, overflow: 'auto', mt: 1}}>
+                {/*<Paper sx={{p: 2, overflow: 'auto'}}>*/}
+                {displayMessages.map((message, index) => {
+                    const isFromCurrentUser = isMessageFromCurrentUser(message);
+                    return (
+                        <Box
+                            key={index}
+                            sx={{
+                                display: 'flex',
+                                justifyContent: isFromCurrentUser ? 'flex-end' : 'flex-start',
+                                mb: 1,
+                            }}
+                        >
+                            <Paper
+                                elevation={1}
                                 sx={{
-                                    display: 'flex',
-                                    justifyContent: isFromCurrentUser ? 'flex-end' : 'flex-start',
-                                    mb: 1,
+                                    px: 2,
+                                    py: 1,
+                                    maxWidth: '70%',
+                                    backgroundColor: isFromCurrentUser ? 'primary.main' : 'grey.700',
+                                    color: isFromCurrentUser ? 'primary.contrastText' : 'text.primary',
+                                    borderRadius: 3,
+                                    borderBottomRightRadius: isFromCurrentUser ? 0.5 : 3,
+                                    borderBottomLeftRadius: isFromCurrentUser ? 3 : 0.5,
+                                    boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
                                 }}
                             >
-                                <Paper
-                                    elevation={1}
-                                    sx={{
-                                        px: 2,
-                                        py: 1,
-                                        maxWidth: '70%',
-                                        backgroundColor: isFromCurrentUser ? 'primary.main' : 'grey.700',
-                                        color: isFromCurrentUser ? 'primary.contrastText' : 'text.primary',
-                                        borderRadius: 3,
-                                        borderBottomRightRadius: isFromCurrentUser ? 0.5 : 3,
-                                        borderBottomLeftRadius: isFromCurrentUser ? 3 : 0.5,
-                                        boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
-                                    }}
+                                <Typography
+                                    variant="body2"
+                                    sx={{wordWrap: 'break-word', lineHeight: 1.4}}
                                 >
-                                    <Typography
-                                        variant="body2"
-                                        sx={{wordWrap: 'break-word', lineHeight: 1.4}}
-                                    >
-                                        {message.content}
-                                    </Typography>
-                                </Paper>
-                            </Box>
-                        );
-                    })}
-                </Paper>
+                                    {message.content}
+                                </Typography>
+                            </Paper>
+                        </Box>
+                    );
+                })}
+                {/*</Paper>*/}
                 <div ref={messagesEndRef}/>
             </Grid>
             <Grid>
                 <Paper sx={{p: 2}}>
                     <Grid sx={{display: 'flex', alignItems: 'center', gap: 1}}>
                         <TextField
+                            fullWidth
                             value={inputText}
                             onChange={handleInputChange}
                             onKeyDown={handleKeyPress}
                             placeholder={`Send a message to ${selectedUser.username}`}
                             disabled={connectionState !== "connected"}
                         />
-                        <IconButton
-                            onClick={handleSendMessage}
-                            disabled={connectionState !== "connected"}
-                        >
-                            <SendIcon/>
-                        </IconButton>
+                        <Tooltip title="Send">
+                            <IconButton
+                                onClick={handleSendMessage}
+                                disabled={connectionState !== "connected"}
+                            >
+                                <SendIcon/>
+                            </IconButton>
+                        </Tooltip>
                     </Grid>
                 </Paper>
             </Grid>

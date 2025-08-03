@@ -52,13 +52,17 @@ export const ChatPage = () => {
             sx={{minHeight: '100vh', width: '100%'}}
         >
             <Paper elevation={1} sx={{p: 2, borderRadius: 0, borderColor: 'divider', borderBottom: 1, width: '100%'}}>
-                <Box sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                <Box sx={{display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative'}}>
                     <Typography variant="h5" component="h1">{"Instant Chat"}</Typography>
-                    {selectedUser && <UserAvatar/>}
+                    {selectedUser && (
+                        <Box sx={{position: 'absolute', right: 0}}>
+                            <UserAvatar/>
+                        </Box>
+                    )}
                 </Box>
             </Paper>
-            <Grid container sx={{flexGrow: 1, overflow: 'hidden'}}>
-                <Grid size={3}>
+            <Grid container sx={{flexGrow: 1, overflow: 'hidden', p: 1, display: 'flex', flexDirection: 'row',}}>
+                <Grid size={3} sx={{borderColor: 'divider', borderRight: 1}}>
                     <UserList
                         users={users}
                         onUserSelect={handleUserSelect}
