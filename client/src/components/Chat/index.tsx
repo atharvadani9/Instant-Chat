@@ -74,7 +74,7 @@ export const ChatPage = () => {
                 </Box>
             </Paper>
             <Grid container sx={{flexGrow: 1, overflow: 'hidden', p: 1, display: 'flex', flexDirection: 'row',}}>
-                <Grid size={3} sx={{borderColor: 'divider', borderRight: 1}}>
+                <Grid size={3} sx={{borderColor: 'divider', borderRight: 1, p: 1}}>
                     <UserList
                         users={users}
                         onUserSelect={handleUserSelect}

@@ -128,7 +128,6 @@ const MessageWindow: React.FC<MessageWindowProps> = ({
                                             wordBreak: 'break-word',
                                             overflowWrap: 'break-word',
                                             lineHeight: 1.4,
-                                            // whiteSpace: 'pre-wrap'
                                         }}
                                     >
                                         {message.content}
@@ -141,6 +140,8 @@ const MessageWindow: React.FC<MessageWindowProps> = ({
                                             mt: 0.5,
                                             color: 'text.secondary',
                                             fontSize: '0.75rem',
+                                            textAlign: 'right',
+                                            width: '100%'
                                         }}
                                     >
                                         {new Date(message.created_at).toLocaleString('en-US', {
