@@ -2,6 +2,7 @@ import type {RouteObject} from "react-router-dom";
 import {Navigate} from "react-router-dom";
 import Register from "../components/Auth/Register.tsx";
 import Login from "../components/Auth/Login.tsx";
+import ChatPage from "../components/Chat";
 
 const routes: RouteObject[] = [
     {
@@ -18,7 +19,7 @@ const routes: RouteObject[] = [
     },
     {
         path: "/chat",
-        element: <div>Chat</div>,
+        element: <ChatPage/>,
     }
 
 ];

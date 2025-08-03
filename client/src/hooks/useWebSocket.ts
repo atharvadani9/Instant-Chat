@@ -1,12 +1,12 @@
 import {useCallback, useEffect, useState} from "react";
 import {useAuthContext} from "../contexts/AuthContext";
-import type {WSMessage} from "../types";
+import type {WSMessage, ConnectionState} from "../types";
 
 export const useWebSocket = () => {
     const {userID} = useAuthContext();
     const [socket, setSocket] = useState<WebSocket | null>(null);
     const [messages, setMessages] = useState<WSMessage[]>([]);
-    const [connectionState, setConnectionState] = useState<"connecting" | "connected" | "disconnected">("disconnected");
+    const [connectionState, setConnectionState] = useState<ConnectionState>("disconnected");
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {

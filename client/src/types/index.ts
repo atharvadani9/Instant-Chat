@@ -24,3 +24,5 @@ export type WSMessage = {
     content?: string;
     error?: string;
 }
+
+export type ConnectionState = "connecting" | "connected" | "disconnected";
