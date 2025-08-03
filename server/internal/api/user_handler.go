@@ -25,6 +25,38 @@ func NewUserHandler(store store.UserStore, logger *log.Logger) *UserHandler {
 	return &UserHandler{Store: store, logger: logger}
 }
 
+func (h *UserHandler) GetMeUser(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		utils.WriteJSON(w, http.StatusMethodNotAllowed, utils.Envelope{"error": "Method not allowed"})
+		return
+	}
+
+	userIDStr := r.URL.Query().Get("user_id")
+	if userIDStr == "" {
+		h.logger.Printf("ERROR: user_id query parameter is required")
+		utils.WriteJSON(w, http.StatusBadRequest, utils.Envelope{"error": "User ID query parameter is required"})
+		return
+	}
+
+	userID, err := strconv.Atoi(userIDStr)
+	if err != nil {
+		h.logger.Printf("ERROR: invalid user_id: %v", err)
+		utils.WriteJSON(w, http.StatusBadRequest, utils.Envelope{"error": "Invalid user ID"})
+		return
+	}
+
+	user, err := h.Store.GetUserByID(userID)
+	if err != nil {
+		h.logger.Printf("ERROR: user not found: %v", err)
+		utils.WriteJSON(w, http.StatusUnauthorized, utils.Envelope{"error": "User not found"})
+		return
+	}
+
+	h.logger.Printf("INFO: User: %v retrieved successfully", user.Username)
+	utils.WriteJSON(w, http.StatusOK, utils.Envelope{"user": user})
+	return
+}
+
 func (h *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		utils.WriteJSON(w, http.StatusMethodNotAllowed, utils.Envelope{"error": "Method not allowed"})
